@@ -44,4 +44,21 @@ Upload één of meerdere CSV-exports van uw bank en categoriseer elke transactie
 ```
 index.html   — de volledige applicatie (één bestand)
 README.md    — deze documentatie
+LICENSE      — GNU General Public License v3
 ```
+
+## Auteur
+
+**Maurice Snoeren** — [macsnoeren@gmail.com](mailto:macsnoeren@gmail.com)
+
+## Licentie
+
+Copyright (C) 2024 Maurice Snoeren
+
+This program is free software: you can redistribute it and/or modify it under the terms of the
+GNU General Public License as published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+[GNU General Public License](https://www.gnu.org/licenses/) for more details.
