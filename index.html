@@ -587,6 +587,15 @@
       word-break: break-word;
       color: #1a1a2e;
     }
+  @media print {
+    header, #card-upload, #card-mapping, #card-transactions,
+    #restore-banner, .no-print { display: none !important; }
+    body { background: white !important; }
+    .card { box-shadow: none !important; border: none !important; }
+    #card-summary { display: block !important; }
+    #btn-pdf-summary { display: none !important; }
+    a { text-decoration: none !important; }
+  }
   </style>
 </head>
 <body>
@@ -596,7 +605,17 @@
     <span class="header-title">Rekening en Verantwoording</span>
     <div class="header-actions">
       <span id="save-indicator" style="font-size:0.78rem;color:#a5d6a7;opacity:0;transition:opacity 0.4s"></span>
+      <div id="storage-meter" title="localStorage gebruik" style="display:flex;align-items:center;gap:0.4rem;font-size:0.75rem;color:#aaa">
+        <div style="width:80px;height:6px;background:rgba(255,255,255,0.15);border-radius:3px;overflow:hidden">
+          <div id="storage-bar" style="height:100%;border-radius:3px;background:#4a7cdc;width:0%;transition:width 0.3s"></div>
+        </div>
+        <span id="storage-label">—</span>
+      </div>
       <button class="btn-header btn-header-green" id="btn-show-summary">Overzicht</button>
+      <button class="btn-header" style="background:#1565c0;color:white" onclick="exportBackup()">&#11015; Opslaan</button>
+      <button class="btn-header" style="background:#1565c0;color:white" onclick="document.getElementById('backup-input').click()">&#11014; Laden</button>
+      <input type="file" id="backup-input" accept=".json" style="display:none" onchange="importBackup(this)">
+      <button class="btn-header" style="background:#37474f;color:white" onclick="document.getElementById('about-modal').classList.remove('hidden')">Over</button>
       <button class="btn-header btn-header-red" id="btn-clear-storage">Data wissen</button>
     </div>
   </div>
@@ -670,7 +689,6 @@
   <!-- STAP 2: Transactietabel -->
   <div class="card hidden" id="card-transactions">
     <h2>Transacties</h2>
-    <div id="bulk-bar" class="hidden"></div>
     <div class="toolbar">
       <input type="search" id="search-input" placeholder="Zoeken op omschrijving…" />
       <select class="filter-type" id="filter-type">
@@ -681,9 +699,6 @@
         <option value="ongelabeld">Ongelabeld</option>
       </select>
       <span class="count" id="tx-count"></span>
-      <span id="save-indicator" style="font-size:0.8rem;color:#2e7d32;opacity:0;transition:opacity 0.4s"></span>
-      <button class="btn" id="btn-show-summary" style="background:#2e7d32;font-size:0.8rem;padding:0.3rem 0.75rem">Overzicht tonen</button>
-      <button class="btn" id="btn-clear-storage" style="background:#e57373;font-size:0.8rem;padding:0.3rem 0.75rem" title="Verwijdert alle opgeslagen labels">Opgeslagen data wissen</button>
     </div>
     <div class="table-wrapper">
       <table id="tx-table">
@@ -706,12 +721,90 @@
 
   <!-- STAP 5 & 6: Overzicht -->
   <div class="card hidden" id="card-summary">
-    <h2>Overzicht</h2>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem">
+      <h2 style="margin:0">Overzicht</h2>
+      <button id="btn-pdf-summary" class="no-print"
+              onclick="window.print()"
+              style="padding:0.35rem 0.9rem;border:none;border-radius:5px;cursor:pointer;
+                     font-size:0.82rem;font-weight:600;background:#c62828;color:white">
+        &#128438; PDF / Afdrukken
+      </button>
+    </div>
     <div id="summary-account-toggles"></div>
     <div id="summary-content"></div>
   </div>
 
 </main>
+
+<!-- About modal -->
+<div id="about-modal" class="hidden" role="dialog" aria-modal="true"
+     style="position:fixed;inset:0;background:rgba(0,0,0,0.45);display:flex;align-items:center;
+            justify-content:center;z-index:1000;padding:1rem"
+     onclick="if(event.target===this)this.classList.add('hidden')">
+  <div style="background:white;border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,0.2);
+              max-width:600px;width:100%;max-height:90vh;overflow-y:auto;display:flex;flex-direction:column">
+    <div style="display:flex;align-items:center;justify-content:space-between;
+                padding:1rem 1.25rem 0.75rem;border-bottom:1px solid #e8ecf2">
+      <h3 style="font-size:1rem;color:#1a1a2e;font-weight:700">Over Rekening en Verantwoording</h3>
+      <button onclick="document.getElementById('about-modal').classList.add('hidden')"
+              style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:#999;line-height:1"
+              title="Sluiten">&times;</button>
+    </div>
+    <div style="padding:1.25rem 1.5rem;font-size:0.9rem;line-height:1.7;color:#333;display:flex;flex-direction:column;gap:1rem">
+
+      <p>
+        <strong>Rekening en Verantwoording</strong> is een hulpmiddel om bankafschriften eenvoudig te
+        verwerken en te categoriseren — zodat rekening en verantwoording een overzichtelijk en herhaalbaar
+        proces wordt.
+      </p>
+
+      <div>
+        <div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.05em;color:#888;
+                    margin-bottom:0.5rem;padding-bottom:0.3rem;border-bottom:1px solid #eee">Wat doet het?</div>
+        <ul style="padding-left:1.2rem;display:flex;flex-direction:column;gap:0.35rem">
+          <li>Importeer CSV-exports van uw bank — kolommen worden automatisch herkend</li>
+          <li>Wijs per transactie een type en categorie toe (inkomsten, uitgaven of intern)</li>
+          <li>Pas een categorie in één klik toe op alle transacties van dezelfde tegenrekening</li>
+          <li>Bekijk een overzicht per rekening met begin- en eindsaldo, verschil en afwijking</li>
+          <li>Interne overboekingen worden apart gegroepeerd met van/naar rekening</li>
+          <li>Transacties met categorie "Overige uitgaven" staan overzichtelijk in een eigen tabel</li>
+          <li>Klik op het ⓘ-knopje bij een transactie om alle ruwe CSV-velden in te zien</li>
+        </ul>
+      </div>
+
+      <div>
+        <div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.05em;color:#888;
+                    margin-bottom:0.5rem;padding-bottom:0.3rem;border-bottom:1px solid #eee">Privacy &amp; veiligheid</div>
+        <div style="background:#e8f5e9;border:1px solid #a5d6a7;border-radius:6px;padding:0.75rem 1rem;display:flex;gap:0.6rem;align-items:flex-start">
+          <span style="font-size:1.1rem;line-height:1.5">&#128274;</span>
+          <span>
+            <strong>Alle data blijft op uw eigen computer.</strong> Er wordt geen informatie naar een
+            server gestuurd. De applicatie werkt volledig in de browser zonder externe verbindingen.
+            CSV-bestanden worden alleen lokaal verwerkt en nooit geüpload.
+          </span>
+        </div>
+      </div>
+
+      <div>
+        <div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.05em;color:#888;
+                    margin-bottom:0.5rem;padding-bottom:0.3rem;border-bottom:1px solid #eee">Opslag</div>
+        <p>
+          Labels en instellingen worden opgeslagen in de <code style="background:#f0f2f7;padding:0.1rem 0.35rem;
+          border-radius:3px;font-size:0.85rem">localStorage</code> van uw browser (maximaal ~5 MB).
+          Na het sluiten en heropenen van de browser blijft alles bewaard. Via <strong>Data wissen</strong>
+          in de header wist u alle opgeslagen data.
+        </p>
+      </div>
+
+      <div>
+        <div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.05em;color:#888;
+                    margin-bottom:0.5rem;padding-bottom:0.3rem;border-bottom:1px solid #eee">Techniek</div>
+        <p>Pure HTML, CSS en JavaScript — geen frameworks, geen externe afhankelijkheden, geen installatie.</p>
+      </div>
+
+    </div>
+  </div>
+</div>
 
 <!-- Info modal -->
 <div id="info-modal" class="hidden" role="dialog" aria-modal="true">
@@ -1270,14 +1363,16 @@ document.getElementById('filter-type').addEventListener('change', applyFilters);
 
 // ─── Stap 4: localStorage ────────────────────────────────────────────────────
 
-const LS_KEY       = 'rev_annotations';
-const LS_STATE_KEY = 'rev_state';
+const LS_KEY        = 'rev_annotations';
+const LS_STATE_KEY  = 'rev_state';
+const LS_HIDDEN_KEY = 'rev_hidden_accounts';
 
 // ── Sessie opslaan (CSV-data + mapping) ──────────────────────────────────────
 
 function saveState() {
   try {
     localStorage.setItem(LS_STATE_KEY, JSON.stringify({ parsedRows, columnHeaders, mapping }));
+    updateStorageMeter();
   } catch (e) {
     // Bestand te groot voor localStorage — alleen annotations bewaren
     console.warn('Sessie-opslag mislukt (bestand te groot?):', e);
@@ -1301,6 +1396,13 @@ function tryRestoreSession() {
   mapping        = state.mapping;
 
   buildTransactions();
+
+  // Herstel hidden accounts vóór render
+  try {
+    const raw = localStorage.getItem(LS_HIDDEN_KEY);
+    if (raw) hiddenAccounts = new Set(JSON.parse(raw));
+  } catch {}
+
   renderTable();
 
   // Herstel-banner tonen
@@ -1322,6 +1424,7 @@ function saveToStorage() {
   try {
     localStorage.setItem(LS_KEY, JSON.stringify(data));
     flashSaved();
+    updateStorageMeter();
   } catch (e) {
     console.warn('localStorage vol of niet beschikbaar:', e);
   }
@@ -1347,6 +1450,72 @@ function loadFromStorage() {
   if (restored > 0) {
     setStatus(`✓ ${transactions.length} transacties geladen — ${restored} eerder opgeslagen labels hersteld.`);
   }
+}
+
+const LS_QUOTA = 5 * 1024 * 1024; // 5 MB standaard browser-limiet
+
+function updateStorageMeter() {
+  try {
+    let used = 0;
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      used += (key.length + (localStorage.getItem(key) || '').length) * 2; // UTF-16
+    }
+    const pct = Math.min((used / LS_QUOTA) * 100, 100);
+    const kb  = (used / 1024).toFixed(1);
+    const mb  = (used / 1024 / 1024).toFixed(2);
+    const label = used > 1024 * 100 ? `${mb} MB` : `${kb} KB`;
+
+    document.getElementById('storage-bar').style.width = pct + '%';
+    document.getElementById('storage-bar').style.background =
+      pct > 80 ? '#e57373' : pct > 50 ? '#ffb74d' : '#4a7cdc';
+    document.getElementById('storage-label').textContent = `${label} / 5 MB`;
+  } catch (e) { /* geen toegang tot localStorage */ }
+}
+
+// ─── Backup export / import ──────────────────────────────────────────────────
+
+function exportBackup() {
+  const backup = {
+    version: 1,
+    exported: new Date().toISOString(),
+    [LS_KEY]:        localStorage.getItem(LS_KEY)        || null,
+    [LS_STATE_KEY]:  localStorage.getItem(LS_STATE_KEY)  || null,
+    [LS_HIDDEN_KEY]: localStorage.getItem(LS_HIDDEN_KEY) || null,
+  };
+  const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const date = new Date().toISOString().slice(0, 10);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `rev_backup_${date}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importBackup(input) {
+  const file = input.files[0];
+  if (!file) return;
+  input.value = '';
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const backup = JSON.parse(e.target.result);
+      if (backup.version !== 1) throw new Error('Onbekend formaat');
+      if (backup[LS_KEY])        localStorage.setItem(LS_KEY,        backup[LS_KEY]);
+      if (backup[LS_STATE_KEY])  localStorage.setItem(LS_STATE_KEY,  backup[LS_STATE_KEY]);
+      if (backup[LS_HIDDEN_KEY]) localStorage.setItem(LS_HIDDEN_KEY, backup[LS_HIDDEN_KEY]);
+      updateStorageMeter();
+      // Herlaad de sessie vanuit het herstelde backup
+      parsedRows = []; columnHeaders = []; transactions = [];
+      hiddenAccounts = new Set();
+      tryRestoreSession();
+      setStatus('✓ Backup geladen.');
+    } catch (err) {
+      alert('Fout bij laden backup: ' + err.message);
+    }
+  };
+  reader.readAsText(file, 'UTF-8');
 }
 
 let saveFlashTimer = null;
@@ -1459,25 +1628,32 @@ function calcTopSummary(txList) {
   const rekeningRows = [];   // [{ rek, beginsaldo, eindsaldo }]
 
   if (mapping.saldo) {
-    const accounts = [...new Set(txList.map(tx => tx.eigenRekening || '(onbekend)'))].sort();
-    beginsaldo = 0; eindsaldo = 0;
-    accounts.forEach(rek => {
-      const group = txList
+    // rekeningRows altijd op basis van ALLE transacties (saldo-tabel niet beïnvloed door toggle)
+    const allTx = transactions.length ? transactions : txList;
+    const allAccounts = [...new Set(allTx.map(tx => tx.eigenRekening || '(onbekend)'))].sort();
+    allAccounts.forEach(rek => {
+      const group = allTx
         .filter(tx => (tx.eigenRekening || '(onbekend)') === rek && tx.saldo !== null)
         .sort((a, b) => a.datum.localeCompare(b.datum));
       if (group.length === 0) return;
       const bs = group[0].saldo - group[0].bedrag;
       const es = group[group.length - 1].saldo;
-      beginsaldo += bs;
-      eindsaldo  += es;
       rekeningRows.push({ rek, beginsaldo: bs, eindsaldo: es });
+    });
+
+    // beginsaldo/eindsaldo totalen wél gefilterd op zichtbare rekeningen (voor afwijking etc.)
+    const visAccounts = [...new Set(txList.map(tx => tx.eigenRekening || '(onbekend)'))].sort();
+    beginsaldo = 0; eindsaldo = 0;
+    visAccounts.forEach(rek => {
+      const r = rekeningRows.find(r => r.rek === rek);
+      if (r) { beginsaldo += r.beginsaldo; eindsaldo += r.eindsaldo; }
     });
   }
 
   return { totInkomsten, totUitgaven, verschil, beginsaldo, eindsaldo, rekeningRows };
 }
 
-function renderTopSummary(stats) {
+function renderTopSummary(stats, txList) {
   const vCls  = stats.verschil  >= 0 ? 'amount-pos' : 'amount-neg';
   const sdCls = (stats.eindsaldo !== null && stats.beginsaldo !== null)
     ? ((stats.eindsaldo - stats.beginsaldo) >= 0 ? 'amount-pos' : 'amount-neg')
@@ -1557,7 +1733,145 @@ function renderTopSummary(stats) {
         </tbody>
       </table>
     </div>` : ''}` : ''}
-  </div>`;
+  </div>
+  ${buildInternTable(txList || [])}
+  ${buildOverigeUitgavenTable(txList || [])}`;
+}
+
+function buildOverigeUitgavenTable(txList) {
+  const rows = txList.filter(t => t.type === 'uitgaven' && t.categorie === 'Overige uitgaven');
+  if (!rows.length) return '';
+
+  // Groepeer per eigenRekening
+  const accounts = [...new Set(rows.map(t => t.eigenRekening || '(onbekend)'))].sort();
+
+  let html = `<div style="margin-top:1rem">
+    <div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.05em;color:#888;
+                margin-bottom:0.5rem;padding-bottom:0.3rem;border-bottom:1px solid #eee">
+      Overige uitgaven
+    </div>`;
+
+  accounts.forEach(rek => {
+    const acRows = rows
+      .filter(t => (t.eigenRekening || '(onbekend)') === rek)
+      .sort((a, b) => a.datum.localeCompare(b.datum));
+    const total = acRows.reduce((s, t) => s + t.bedrag, 0);
+    const totalCls = total >= 0 ? 'amount-pos' : 'amount-neg';
+    const hasTegen = acRows.some(t => t.tegenrekening);
+
+    html += `<table style="width:100%;border-collapse:collapse;font-size:0.83rem;margin-bottom:1rem">
+      <thead>
+        <tr style="background:#1a1a2e;color:white">
+          <th colspan="${hasTegen ? 4 : 3}" style="padding:0.45rem 0.75rem;text-align:left;font-family:monospace;font-weight:600">
+            ${esc(rek)}
+          </th>
+        </tr>
+        <tr style="background:#f0f2f7;color:#888;font-size:0.75rem">
+          <th style="padding:0.35rem 0.75rem;text-align:left;font-weight:600">Datum</th>
+          <th style="padding:0.35rem 0.75rem;text-align:left;font-weight:600">Omschrijving</th>
+          ${hasTegen ? `<th style="padding:0.35rem 0.75rem;text-align:left;font-weight:600">Tegenrekening</th>` : ''}
+          <th style="padding:0.35rem 0.75rem;text-align:right;font-weight:600">Bedrag</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${acRows.map((t, i) => {
+          const cls = t.bedrag >= 0 ? 'amount-pos' : 'amount-neg';
+          return `<tr style="background:${i % 2 === 0 ? 'white' : '#fafbfc'}">
+            <td style="padding:0.4rem 0.75rem;white-space:nowrap;color:#888;font-size:0.8rem">
+              ${esc(t.datum)}
+              <button class="btn-info" onclick="openModal(${t.idx})" title="Alle details bekijken">i</button>
+            </td>
+            <td style="padding:0.4rem 0.75rem;max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
+                title="${esc(t.omschrijving)}">${esc(t.omschrijving)}</td>
+            ${hasTegen ? `<td style="padding:0.4rem 0.75rem;font-family:monospace;font-size:0.78rem;color:#555">${esc(t.tegenrekening || '—')}</td>` : ''}
+            <td style="padding:0.4rem 0.75rem;text-align:right;font-weight:600" class="${cls}">${formatEuro(t.bedrag)}</td>
+          </tr>`;
+        }).join('')}
+        <tr style="background:#f0f2f7;font-weight:700;border-top:2px solid #d0d4e0">
+          <td colspan="${hasTegen ? 3 : 2}" style="padding:0.4rem 0.75rem">Totaal</td>
+          <td style="padding:0.4rem 0.75rem;text-align:right" class="${totalCls}">${formatEuro(total)}</td>
+        </tr>
+      </tbody>
+    </table>`;
+  });
+
+  html += `</div>`;
+  return html;
+}
+
+function buildInternTable(txList) {
+  if (!txList.length) return '';
+
+  // Groepeer intern per eigenRekening, dan per omschrijving
+  const accounts = [...new Set(
+    txList.filter(t => t.type === 'intern').map(t => t.eigenRekening || '(onbekend)')
+  )].sort();
+
+  if (!accounts.length) return '';
+
+  let html = `<div style="margin-top:1rem">
+    <div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.05em;color:#888;
+                margin-bottom:0.5rem;padding-bottom:0.3rem;border-bottom:1px solid #eee">
+      Interne overboekingen
+    </div>`;
+
+  accounts.forEach(rek => {
+    const rows = txList.filter(t => t.type === 'intern' && (t.eigenRekening || '(onbekend)') === rek);
+
+    // Groepeer op omschrijving
+    const grouped = {};
+    rows.forEach(t => {
+      const key = t.omschrijving || '(geen omschrijving)';
+      if (!grouped[key]) grouped[key] = { count: 0, total: 0, categorie: t.categorie };
+      grouped[key].count++;
+      grouped[key].total += t.bedrag;
+    });
+
+    const entries = Object.entries(grouped).sort((a, b) =>
+      Math.abs(b[1].total) - Math.abs(a[1].total)
+    );
+    const rekTotal = rows.reduce((s, t) => s + t.bedrag, 0);
+    const rekCls   = rekTotal >= 0 ? 'amount-pos' : 'amount-neg';
+
+    html += `<table style="width:100%;border-collapse:collapse;font-size:0.83rem;margin-bottom:1rem">
+      <thead>
+        <tr style="background:#1a1a2e;color:white">
+          <th colspan="5" style="padding:0.45rem 0.75rem;text-align:left;font-family:monospace;font-weight:600">
+            ${esc(rek)}
+          </th>
+        </tr>
+        <tr style="background:#f0f2f7;color:#888;font-size:0.75rem">
+          <th style="padding:0.35rem 0.75rem;text-align:left;font-weight:600">Omschrijving</th>
+          <th style="padding:0.35rem 0.75rem;text-align:left;font-weight:600">Van rekening</th>
+          <th style="padding:0.35rem 0.75rem;text-align:left;font-weight:600">Naar rekening</th>
+          <th style="padding:0.35rem 0.75rem;text-align:right;font-weight:600">Aantal</th>
+          <th style="padding:0.35rem 0.75rem;text-align:right;font-weight:600">Totaal</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${entries.map(([omschr, g], i) => {
+          const cls = g.total >= 0 ? 'amount-pos' : 'amount-neg';
+          const van  = g.total < 0 ? rek : (g.categorie || '—');
+          const naar = g.total < 0 ? (g.categorie || '—') : rek;
+          return `<tr style="background:${i % 2 === 0 ? 'white' : '#fafbfc'}">
+            <td style="padding:0.4rem 0.75rem;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
+                title="${esc(omschr)}">${esc(omschr)}</td>
+            <td style="padding:0.4rem 0.75rem;font-family:monospace;font-size:0.78rem;color:#555">${esc(van)}</td>
+            <td style="padding:0.4rem 0.75rem;font-family:monospace;font-size:0.78rem;color:#555">${esc(naar)}</td>
+            <td style="padding:0.4rem 0.75rem;text-align:right;color:#aaa">${g.count}×</td>
+            <td style="padding:0.4rem 0.75rem;text-align:right;font-weight:600" class="${cls}">${formatEuro(g.total)}</td>
+          </tr>`;
+        }).join('')}
+        <tr style="background:#f0f2f7;font-weight:700;border-top:2px solid #d0d4e0">
+          <td colspan="4" style="padding:0.4rem 0.75rem">Totaal</td>
+          <td style="padding:0.4rem 0.75rem;text-align:right" class="${rekCls}">${formatEuro(rekTotal)}</td>
+        </tr>
+      </tbody>
+    </table>`;
+  });
+
+  html += `</div>`;
+  return html;
 }
 
 function renderSummary() {
@@ -1568,7 +1882,7 @@ function renderSummary() {
   if (!hasEigen) {
     document.getElementById('summary-account-toggles').innerHTML = '';
     document.getElementById('summary-content').innerHTML =
-      renderTopSummary(calcTopSummary(transactions)) + summaryForGroup(transactions);
+      renderTopSummary(calcTopSummary(transactions), transactions) + summaryForGroup(transactions);
     return;
   }
 
@@ -1597,7 +1911,7 @@ function renderSummary() {
   const visibleTx = transactions.filter(tx =>
     !hiddenAccounts.has(tx.eigenRekening || '(onbekend)')
   );
-  let html = renderTopSummary(calcTopSummary(visibleTx));
+  let html = renderTopSummary(calcTopSummary(visibleTx), visibleTx);
 
   // Per rekening + totaalkolom naast elkaar
   const visibleAccounts = allAccounts.filter(r => !hiddenAccounts.has(r));
@@ -1632,7 +1946,7 @@ function renderSummary() {
   if (!cols) {
     html += `<p style="color:#aaa;font-size:0.9rem">Alle rekeningen zijn uitgeschakeld.</p>`;
   } else {
-    html += `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.5rem;align-items:start">${cols}</div>`;
+    html += `<div style="display:flex;flex-direction:column;gap:2rem">${cols}</div>`;
   }
 
   document.getElementById('summary-content').innerHTML = html;
@@ -1641,6 +1955,7 @@ function renderSummary() {
 function toggleAccount(rek) {
   if (hiddenAccounts.has(rek)) hiddenAccounts.delete(rek);
   else hiddenAccounts.add(rek);
+  try { localStorage.setItem(LS_HIDDEN_KEY, JSON.stringify([...hiddenAccounts])); } catch {}
   renderSummary();
 }
 
@@ -1694,7 +2009,7 @@ function newSession() {
 }
 
 // ─── Pagina-load: probeer sessie te herstellen ────────────────────────────────
-window.addEventListener('DOMContentLoaded', tryRestoreSession);
+window.addEventListener('DOMContentLoaded', () => { tryRestoreSession(); updateStorageMeter(); });
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 function setStatus(msg, isError = false) {
