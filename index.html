@@ -1553,6 +1553,7 @@ document.getElementById('btn-clear-storage').addEventListener('click', () => {
   if (!confirm('Alle opgeslagen data verwijderen (CSV + labels)? De pagina wordt hierna leeggemaakt.')) return;
   localStorage.removeItem(LS_KEY);
   localStorage.removeItem(LS_STATE_KEY);
+  localStorage.removeItem(LS_HIDDEN_KEY);
   location.reload();
 });
 
