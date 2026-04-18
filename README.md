@@ -1,3 +1,5 @@
+[![pages-build-deployment](https://github.com/macsnoeren/rekening_en_verantwoording/actions/workflows/pages/pages-build-deployment/badge.svg?branch=main)](https://github.com/macsnoeren/rekening_en_verantwoording/actions/workflows/pages/pages-build-deployment)
+
 # Rekening en Verantwoording
 
 **Live:** https://macsnoeren.github.io/rekening_en_verantwoording/
