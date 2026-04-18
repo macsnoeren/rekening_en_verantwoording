@@ -1,0 +1,1715 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rekening en Verantwoording</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, sans-serif;
+      background: #f4f6f9;
+      color: #1a1a2e;
+      min-height: 100vh;
+    }
+
+    header {
+      background: #1a1a2e;
+      color: white;
+      padding: 0.75rem 2rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    }
+    .header-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .header-title {
+      font-size: 1.15rem;
+      font-weight: bold;
+      flex: 1;
+      white-space: nowrap;
+    }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .btn-header {
+      padding: 0.35rem 0.9rem;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 0.82rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .btn-header-green  { background: #2e7d32; color: white; }
+    .btn-header-green:hover  { background: #1b5e20; }
+    .btn-header-red    { background: #c62828; color: white; }
+    .btn-header-red:hover    { background: #b71c1c; }
+    /* Bulk-bar in header */
+    #bulk-bar {
+      margin-top: 0.5rem;
+      border-radius: 5px;
+    }
+
+    main {
+      max-width: 1100px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+
+    .card {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .card h2 {
+      margin-bottom: 1rem;
+      font-size: 1rem;
+      color: #555;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Upload zone */
+    .upload-zone {
+      border: 2px dashed #c0c8d8;
+      border-radius: 8px;
+      padding: 2rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .upload-zone:hover,
+    .upload-zone.dragover {
+      border-color: #4a7cdc;
+      background: #eef3fb;
+    }
+    .upload-zone input[type="file"] {
+      display: none;
+    }
+    .upload-zone p {
+      color: #666;
+      margin-bottom: 0.5rem;
+    }
+    .upload-zone .hint {
+      font-size: 0.8rem;
+      color: #999;
+    }
+
+    /* Delimiter selector */
+    .options-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+    }
+    .options-row label {
+      font-size: 0.9rem;
+      color: #555;
+    }
+    .options-row select {
+      padding: 0.3rem 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 0.9rem;
+    }
+
+    /* Status message */
+    #status {
+      margin-top: 1rem;
+      font-size: 0.9rem;
+      color: #2e7d32;
+      min-height: 1.2rem;
+    }
+    #status.error { color: #c62828; }
+
+    /* Preview table */
+    .table-wrapper {
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+    }
+    thead th {
+      background: #1a1a2e;
+      color: white;
+      padding: 0.6rem 0.75rem;
+      text-align: left;
+      white-space: nowrap;
+    }
+    tbody tr:nth-child(even) { background: #f9fafc; }
+    tbody tr:hover { background: #eef3fb; }
+    tbody td {
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid #e8ecf2;
+      white-space: nowrap;
+      max-width: 280px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Column mapping */
+    .mapping-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 0.75rem;
+    }
+    .mapping-grid label {
+      display: flex;
+      flex-direction: column;
+      font-size: 0.85rem;
+      color: #444;
+      gap: 0.3rem;
+    }
+    .mapping-grid select {
+      padding: 0.35rem 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 0.5rem 1.25rem;
+      background: #4a7cdc;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 600;
+      transition: background 0.2s;
+    }
+    .btn:hover { background: #3a6bc5; }
+    .btn:disabled { background: #aaa; cursor: default; }
+
+    .hidden { display: none !important; }
+
+    /* Transactietabel */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+    .toolbar input[type="search"] {
+      flex: 1;
+      min-width: 160px;
+      padding: 0.4rem 0.75rem;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 0.875rem;
+    }
+    .toolbar select.filter-type {
+      padding: 0.4rem 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 0.8rem;
+      background: white;
+    }
+    .toolbar .count {
+      font-size: 0.8rem;
+      color: #888;
+      white-space: nowrap;
+    }
+    /* Sticky tabelheader */
+    #tx-table thead th {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+    /* Sectiekop per eigen rekening */
+    tr.account-header-row td {
+      background: #1a1a2e;
+      color: #e0e6f0;
+      padding: 0.55rem 0.75rem;
+      font-size: 0.875rem;
+    }
+
+    .amount-pos { color: #2e7d32; font-weight: 600; }
+    .amount-neg { color: #c62828; font-weight: 600; }
+
+    /* Paginering */
+    .pagination {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 1rem;
+      font-size: 0.875rem;
+      flex-wrap: wrap;
+    }
+    .pagination button {
+      padding: 0.3rem 0.65rem;
+      border: 1px solid #ccc;
+      background: white;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.875rem;
+    }
+    .pagination button:hover:not(:disabled) { background: #eef3fb; border-color: #4a7cdc; }
+    .pagination button:disabled { color: #aaa; cursor: default; }
+    .pagination button.active { background: #4a7cdc; color: white; border-color: #4a7cdc; }
+    .pagination .page-info { color: #666; }
+
+    /* Type / categorie dropdowns in tabel */
+    td.col-type, td.col-cat { white-space: nowrap; }
+    select.sel-type, select.sel-cat {
+      padding: 0.25rem 0.4rem;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      background: white;
+      cursor: pointer;
+      max-width: 160px;
+    }
+    select.sel-type:focus, select.sel-cat:focus {
+      outline: 2px solid #4a7cdc;
+      border-color: transparent;
+    }
+    /* kleur badge op type */
+    select.sel-type[data-v="inkomsten"]  { border-color: #a5d6a7; background: #f1f8e9; }
+    select.sel-type[data-v="uitgaven"]   { border-color: #ef9a9a; background: #fff3f3; }
+    select.sel-type[data-v="intern"]     { border-color: #90caf9; background: #e3f2fd; }
+
+    /* Bulk-apply notificatiebalk */
+    #bulk-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+      background: #fff8e1;
+      border: 1px solid #ffe082;
+      border-radius: 6px;
+      padding: 0.6rem 1rem;
+      margin-bottom: 0.75rem;
+      font-size: 0.85rem;
+      color: #5d4037;
+    }
+    #bulk-bar strong { color: #1a1a2e; }
+    #bulk-bar .bulk-rek {
+      font-family: monospace;
+      background: #fff3cd;
+      padding: 0.1rem 0.35rem;
+      border-radius: 3px;
+      font-size: 0.8rem;
+    }
+    .btn-bulk {
+      padding: 0.3rem 0.75rem;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    .btn-bulk-unlabeled { background: #4a7cdc; color: white; }
+    .btn-bulk-unlabeled:hover { background: #3a6bc5; }
+    .btn-bulk-all  { background: #e0e0e0; color: #333; }
+    .btn-bulk-all:hover  { background: #bdbdbd; }
+    .btn-bulk-close { background: none; color: #999; font-size: 1rem; padding: 0 0.3rem; }
+    .btn-bulk-close:hover { color: #333; }
+
+    /* Overzicht */
+    .summary-totals {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .summary-box {
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      text-align: center;
+    }
+    .summary-box .label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.3rem; }
+    .summary-box .amount { font-size: 1.4rem; font-weight: 700; }
+    .box-inkomsten { background: #e8f5e9; color: #1b5e20; }
+    .box-uitgaven  { background: #ffebee; color: #b71c1c; }
+    .box-saldo-pos { background: #e3f2fd; color: #0d47a1; }
+    .box-saldo-neg { background: #fce4ec; color: #880e4f; }
+    .box-ongelabeld { background: #fff8e1; color: #e65100; }
+
+    .summary-section { margin-bottom: 1.5rem; }
+    .summary-section h3 {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #888;
+      margin-bottom: 0.6rem;
+      padding-bottom: 0.3rem;
+      border-bottom: 1px solid #eee;
+    }
+    .cat-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.35rem 0;
+      border-bottom: 1px solid #f3f3f3;
+      font-size: 0.875rem;
+    }
+    .cat-row:last-child { border-bottom: none; }
+    .cat-name { flex: 1; color: #333; }
+    .cat-count { font-size: 0.75rem; color: #aaa; min-width: 2.5rem; text-align: right; }
+    .cat-amount { min-width: 100px; text-align: right; font-weight: 600; }
+    .cat-bar-wrap { width: 120px; height: 6px; background: #eee; border-radius: 3px; overflow: hidden; }
+    .cat-bar { height: 100%; border-radius: 3px; }
+    .bar-inkomsten { background: #66bb6a; }
+    .bar-uitgaven  { background: #ef5350; }
+    .bar-intern    { background: #42a5f5; }
+
+    /* Herstel-banner */
+    #restore-banner {
+      background: #e8f5e9;
+      border: 1px solid #a5d6a7;
+      border-radius: 6px;
+      padding: 0.65rem 1rem;
+      margin-bottom: 1rem;
+      font-size: 0.875rem;
+      color: #1b5e20;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+    #restore-banner span { flex: 1; }
+    #restore-banner button {
+      padding: 0.25rem 0.75rem;
+      border: 1px solid #a5d6a7;
+      background: white;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      color: #2e7d32;
+      white-space: nowrap;
+    }
+    #restore-banner button:hover { background: #c8e6c9; }
+
+    .warn-unlabeled {
+      background: #fff8e1;
+      border: 1px solid #ffe082;
+      border-radius: 6px;
+      padding: 0.6rem 1rem;
+      font-size: 0.85rem;
+      color: #5d4037;
+      margin-bottom: 1rem;
+    }
+
+    /* Tegenrekening-groepen in overzicht */
+    /* Tegenrekening-tabel */
+    .rek-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+    .rek-table tr.rek-header td {
+      background: #1a1a2e;
+      color: white;
+      padding: 0.55rem 0.75rem;
+      font-weight: 700;
+      font-family: monospace;
+      font-size: 0.875rem;
+    }
+    .rek-table tr.rek-header td.rek-meta-cell {
+      font-family: system-ui, sans-serif;
+      font-size: 0.75rem;
+      font-weight: 400;
+      color: #ccc;
+      text-align: right;
+      white-space: nowrap;
+    }
+    .rek-table tr.rek-header td.rek-total-cell {
+      font-family: system-ui, sans-serif;
+      font-size: 0.875rem;
+      text-align: right;
+      white-space: nowrap;
+    }
+    .rek-total-pos { color: #a5d6a7; }
+    .rek-total-neg { color: #ef9a9a; }
+    .rek-total-mix { color: #ccc; }
+    .rek-table tr.rek-col-header td {
+      background: #f0f2f7;
+      color: #888;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.3rem 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .rek-table tr.rek-spacer td {
+      height: 0.75rem;
+      background: #f4f6f9;
+      border: none;
+    }
+    .rek-table tr.rek-data td {
+      padding: 0.45rem 0.75rem;
+      border-bottom: 1px solid #f0f0f0;
+      vertical-align: middle;
+    }
+    .rek-table tr.rek-data:last-of-type td { border-bottom: none; }
+    .rek-table tr.rek-data:nth-child(even) { background: #fafbfc; }
+    .rek-tx-datum  { color: #888; white-space: nowrap; width: 90px; }
+    .rek-tx-omschr { color: #333; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .rek-tx-bedrag { text-align: right; font-weight: 600; white-space: nowrap; width: 100px; }
+    .rek-tx-type   { width: 110px; }
+    .rek-tx-cat    { color: #555; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .badge {
+      display: inline-block;
+      padding: 0.1rem 0.4rem;
+      border-radius: 3px;
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+    .badge-inkomsten { background: #e8f5e9; color: #2e7d32; }
+    .badge-uitgaven  { background: #ffebee; color: #c62828; }
+    .badge-intern    { background: #e3f2fd; color: #1565c0; }
+    .badge-leeg      { background: #fff8e1; color: #e65100; }
+
+    /* Tabs in overzicht */
+    .summary-tabs {
+      display: flex;
+      gap: 0;
+      margin-bottom: 1.25rem;
+      border-bottom: 2px solid #e0e4ed;
+    }
+    .tab-btn {
+      padding: 0.5rem 1.1rem;
+      border: none;
+      background: none;
+      cursor: pointer;
+      font-size: 0.875rem;
+      color: #888;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      font-weight: 500;
+      transition: color 0.15s;
+    }
+    .tab-btn:hover { color: #1a1a2e; }
+    .tab-btn.active { color: #1a1a2e; border-bottom-color: #4a7cdc; font-weight: 700; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* Info-knop per rij */
+    .btn-info {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.4rem;
+      height: 1.4rem;
+      border-radius: 50%;
+      border: 1.5px solid #90caf9;
+      background: #e3f2fd;
+      color: #1565c0;
+      font-size: 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+    .btn-info:hover { background: #bbdefb; border-color: #1565c0; }
+
+    /* Modal overlay */
+    #info-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 1rem;
+    }
+    #info-modal .modal-box {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+      max-width: 600px;
+      width: 100%;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+    }
+    #info-modal .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1.25rem 0.75rem;
+      border-bottom: 1px solid #e8ecf2;
+    }
+    #info-modal .modal-header h3 {
+      font-size: 0.95rem;
+      color: #1a1a2e;
+    }
+    #info-modal .modal-header button {
+      background: none;
+      border: none;
+      font-size: 1.3rem;
+      cursor: pointer;
+      color: #999;
+      line-height: 1;
+    }
+    #info-modal .modal-header button:hover { color: #333; }
+    #info-modal .modal-body {
+      overflow-y: auto;
+      padding: 1rem 1.25rem;
+    }
+    .info-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+    .info-table tr:nth-child(even) { background: #f9fafc; }
+    .info-table td {
+      padding: 0.45rem 0.6rem;
+      border-bottom: 1px solid #eee;
+      vertical-align: top;
+    }
+    .info-table td:first-child {
+      color: #666;
+      white-space: nowrap;
+      font-weight: 600;
+      width: 40%;
+    }
+    .info-table td:last-child {
+      word-break: break-word;
+      color: #1a1a2e;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-row">
+    <span class="header-title">Rekening en Verantwoording</span>
+    <div class="header-actions">
+      <span id="save-indicator" style="font-size:0.78rem;color:#a5d6a7;opacity:0;transition:opacity 0.4s"></span>
+      <button class="btn-header btn-header-green" id="btn-show-summary">Overzicht</button>
+      <button class="btn-header btn-header-red" id="btn-clear-storage">Data wissen</button>
+    </div>
+  </div>
+  <div id="bulk-bar" class="hidden"></div>
+</header>
+
+<main>
+
+  <!-- Herstel-banner (zichtbaar na auto-restore) -->
+  <div id="restore-banner" class="hidden">
+    <span>&#9989; <span id="restore-info"></span></span>
+    <button onclick="document.getElementById('restore-banner').classList.add('hidden')">Sluiten</button>
+    <button onclick="newSession()">Nieuw bestand laden</button>
+  </div>
+
+  <!-- STAP 1: Upload -->
+  <div class="card" id="card-upload">
+    <h2>Stap 1 — CSV uploaden</h2>
+
+    <div class="upload-zone" id="upload-zone">
+      <input type="file" id="file-input" accept=".csv,.txt" />
+      <p>&#128196; Klik hier om een CSV-bestand te kiezen</p>
+      <p>of sleep het bestand hiernaartoe</p>
+      <span class="hint">Ondersteund: .csv, .txt</span>
+    </div>
+
+    <div class="options-row">
+      <label>
+        Scheidingsteken:
+        <select id="delimiter">
+          <option value="auto">Automatisch detecteren</option>
+          <option value=",">Komma ( , )</option>
+          <option value=";">Puntkomma ( ; )</option>
+          <option value="\t">Tab</option>
+          <option value="|">Pipe ( | )</option>
+        </select>
+      </label>
+      <label>
+        Tekstcodering:
+        <select id="encoding">
+          <option value="windows-1252">Windows-1252 (ING / ABN)</option>
+          <option value="utf-8">UTF-8</option>
+          <option value="iso-8859-1">ISO-8859-1</option>
+        </select>
+      </label>
+    </div>
+
+    <div id="status"></div>
+  </div>
+
+  <!-- STAP 1b: Kolom-mapping -->
+  <div class="card hidden" id="card-mapping">
+    <h2>Stap 1b — Kolommen koppelen</h2>
+    <p style="font-size:0.85rem;color:#666;margin-bottom:1rem;">
+      Kies welke kolom overeenkomt met Datum, Bedrag en Omschrijving.
+    </p>
+    <div class="mapping-grid" id="mapping-grid"></div>
+    <div style="margin-top:1rem;">
+      <button class="btn" id="btn-confirm-mapping">Bevestigen &rarr;</button>
+    </div>
+  </div>
+
+  <!-- Preview (ruwe data, alleen zichtbaar vóór bevestigen) -->
+  <div class="card hidden" id="card-preview">
+    <h2>Voorbeeld — eerste 5 rijen (ruwe data)</h2>
+    <div class="table-wrapper">
+      <table id="preview-table"></table>
+    </div>
+  </div>
+
+  <!-- STAP 2: Transactietabel -->
+  <div class="card hidden" id="card-transactions">
+    <h2>Transacties</h2>
+    <div id="bulk-bar" class="hidden"></div>
+    <div class="toolbar">
+      <input type="search" id="search-input" placeholder="Zoeken op omschrijving…" />
+      <select class="filter-type" id="filter-type">
+        <option value="">Alle types</option>
+        <option value="inkomsten">Inkomsten</option>
+        <option value="uitgaven">Uitgaven</option>
+        <option value="intern">Intern</option>
+        <option value="ongelabeld">Ongelabeld</option>
+      </select>
+      <span class="count" id="tx-count"></span>
+      <span id="save-indicator" style="font-size:0.8rem;color:#2e7d32;opacity:0;transition:opacity 0.4s"></span>
+      <button class="btn" id="btn-show-summary" style="background:#2e7d32;font-size:0.8rem;padding:0.3rem 0.75rem">Overzicht tonen</button>
+      <button class="btn" id="btn-clear-storage" style="background:#e57373;font-size:0.8rem;padding:0.3rem 0.75rem" title="Verwijdert alle opgeslagen labels">Opgeslagen data wissen</button>
+    </div>
+    <div class="table-wrapper">
+      <table id="tx-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Datum</th>
+            <th>Bedrag</th>
+            <th>Omschrijving</th>
+            <th id="th-tegenrekening" class="hidden">Tegenrekening</th>
+            <th>Type</th>
+            <th>Categorie</th>
+          </tr>
+        </thead>
+        <tbody id="tx-tbody"></tbody>
+      </table>
+    </div>
+    <div class="pagination" id="pagination"></div>
+  </div>
+
+  <!-- STAP 5 & 6: Overzicht -->
+  <div class="card hidden" id="card-summary">
+    <h2>Overzicht</h2>
+    <div id="summary-account-toggles"></div>
+    <div id="summary-content"></div>
+  </div>
+
+</main>
+
+<!-- Info modal -->
+<div id="info-modal" class="hidden" role="dialog" aria-modal="true">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 id="modal-title">Transactiedetails</h3>
+      <button onclick="closeModal()" title="Sluiten">&times;</button>
+    </div>
+    <div class="modal-body">
+      <table class="info-table" id="modal-table"></table>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── Globals ────────────────────────────────────────────────────────────────
+let parsedRows = [];      // alle rijen als object-arrays
+let columnHeaders = [];   // kolomnamen uit CSV
+let mapping = { datum: '', bedrag: '', omschrijving: '', tegenrekening: '', eigenRekening: '' };
+let hiddenAccounts = new Set(); // rekeningen die uitgesloten zijn van het overzicht
+
+// ─── Upload zone setup ──────────────────────────────────────────────────────
+const uploadZone = document.getElementById('upload-zone');
+const fileInput  = document.getElementById('file-input');
+
+uploadZone.addEventListener('click', () => fileInput.click());
+
+uploadZone.addEventListener('dragover', e => {
+  e.preventDefault();
+  uploadZone.classList.add('dragover');
+});
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+uploadZone.addEventListener('drop', e => {
+  e.preventDefault();
+  uploadZone.classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file) handleFile(file);
+});
+
+fileInput.addEventListener('change', () => {
+  if (fileInput.files[0]) handleFile(fileInput.files[0]);
+});
+
+// ─── File handling ───────────────────────────────────────────────────────────
+function handleFile(file) {
+  setStatus('');
+  const encoding = document.getElementById('encoding').value;
+  const reader = new FileReader();
+
+  reader.onload = e => {
+    try {
+      const text = e.target.result;
+      processCSV(text, file.name);
+    } catch (err) {
+      setStatus('Fout bij lezen: ' + err.message, true);
+    }
+  };
+
+  reader.onerror = () => setStatus('Bestand kon niet worden gelezen.', true);
+  reader.readAsText(file, encoding);
+}
+
+// ─── CSV parsing ─────────────────────────────────────────────────────────────
+function detectDelimiter(firstLine) {
+  const delSetting = document.getElementById('delimiter').value;
+  if (delSetting !== 'auto') return delSetting === '\\t' ? '\t' : delSetting;
+
+  const candidates = [';', ',', '\t', '|'];
+  let best = ',';
+  let bestCount = 0;
+  for (const d of candidates) {
+    const count = (firstLine.match(new RegExp('\\' + (d === '\t' ? 't' : d), 'g')) || []).length;
+    if (count > bestCount) { bestCount = count; best = d; }
+  }
+  return best;
+}
+
+function parseCSVLine(line, delimiter) {
+  const result = [];
+  let current = '';
+  let inQuotes = false;
+
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') {
+      if (inQuotes && line[i + 1] === '"') { current += '"'; i++; }
+      else inQuotes = !inQuotes;
+    } else if (ch === delimiter && !inQuotes) {
+      result.push(current.trim());
+      current = '';
+    } else {
+      current += ch;
+    }
+  }
+  result.push(current.trim());
+  return result;
+}
+
+function processCSV(text, filename) {
+  // Verwijder BOM als aanwezig
+  const clean = text.replace(/^\uFEFF/, '');
+  const lines = clean.split(/\r?\n/).filter(l => l.trim() !== '');
+
+  if (lines.length < 2) {
+    setStatus('Het bestand lijkt leeg of heeft maar één rij.', true);
+    return;
+  }
+
+  const delimiter = detectDelimiter(lines[0]);
+  columnHeaders = parseCSVLine(lines[0], delimiter);
+
+  parsedRows = [];
+  for (let i = 1; i < lines.length; i++) {
+    const values = parseCSVLine(lines[i], delimiter);
+    if (values.length < 2) continue;
+    const row = {};
+    columnHeaders.forEach((h, idx) => { row[h] = values[idx] ?? ''; });
+    parsedRows.push(row);
+  }
+
+  setStatus(`✓ "${filename}" geladen — ${parsedRows.length} transacties gevonden (delimiter: "${delimiter === '\t' ? 'tab' : delimiter}")`);
+  showPreview();
+  showMappingUI();
+}
+
+// ─── Preview ─────────────────────────────────────────────────────────────────
+function showPreview() {
+  const table = document.getElementById('preview-table');
+  const previewRows = parsedRows.slice(0, 5);
+
+  let html = '<thead><tr>' + columnHeaders.map(h => `<th>${esc(h)}</th>`).join('') + '</tr></thead><tbody>';
+  for (const row of previewRows) {
+    html += '<tr>' + columnHeaders.map(h => `<td title="${esc(row[h])}">${esc(row[h])}</td>`).join('') + '</tr>';
+  }
+  html += '</tbody>';
+  table.innerHTML = html;
+
+  document.getElementById('card-preview').classList.remove('hidden');
+}
+
+// ─── Column mapping UI ───────────────────────────────────────────────────────
+function showMappingUI() {
+  const grid = document.getElementById('mapping-grid');
+  const fields = [
+    { key: 'datum',          label: 'Datum',                    hint: 'bijv. "Datum", "Date"',              required: true  },
+    { key: 'bedrag',         label: 'Bedrag',                   hint: 'bijv. "Bedrag", "Amount"',           required: true  },
+    { key: 'omschrijving',   label: 'Omschrijving',            hint: 'bijv. "Omschrijving", "Naam"',       required: true  },
+    { key: 'eigenRekening',  label: 'Eigen rekening (IBAN)',   hint: 'optioneel — groepeert de tabel',       required: false },
+    { key: 'saldo',          label: 'Saldo na boeking',        hint: 'optioneel — voor begin/eindsaldo',     required: false },
+    { key: 'tegenrekening',  label: 'Tegenrekening',           hint: 'optioneel — voor bulk-labelen',        required: false },
+  ];
+
+  grid.innerHTML = fields.map(f => {
+    const options = columnHeaders.map(h =>
+      `<option value="${esc(h)}" ${autoGuess(f.key, h) ? 'selected' : ''}>${esc(h)}</option>`
+    ).join('');
+    const optLabel = f.required ? '' : ' <em style="color:#aaa;font-weight:normal">(optioneel)</em>';
+    return `
+      <label>
+        ${f.label}${optLabel} <small style="color:#999">(${f.hint})</small>
+        <select data-field="${f.key}" id="map-${f.key}">
+          <option value="">— kies kolom —</option>
+          ${options}
+        </select>
+      </label>`;
+  }).join('');
+
+  document.getElementById('card-mapping').classList.remove('hidden');
+}
+
+function autoGuess(field, header) {
+  const h = header.toLowerCase();
+  const guesses = {
+    datum:         ['datum', 'date', 'boekingsdatum', 'transactiedatum'],
+    bedrag:        ['bedrag', 'amount', 'bedrag (eur)', 'af/bij'],
+    omschrijving:  ['omschrijving', 'description', 'mededelingen', 'naam omschrijving'],
+    eigenRekening: ['eigen rekening', 'mijn rekening', 'accountnummer', 'rekeningnummer'],
+    saldo:         ['saldo', 'balance', 'saldo na boeking', 'balans'],
+    tegenrekening: ['tegenrekening', 'tegenpartij iban', 'counterparty iban'],
+  };
+  return (guesses[field] || []).some(g => h.includes(g));
+}
+
+document.getElementById('btn-confirm-mapping').addEventListener('click', () => {
+  mapping.datum         = document.getElementById('map-datum').value;
+  mapping.bedrag        = document.getElementById('map-bedrag').value;
+  mapping.omschrijving  = document.getElementById('map-omschrijving').value;
+  mapping.eigenRekening = document.getElementById('map-eigenRekening').value;
+  mapping.saldo         = document.getElementById('map-saldo').value;
+  mapping.tegenrekening = document.getElementById('map-tegenrekening').value;
+
+  if (!mapping.datum || !mapping.bedrag || !mapping.omschrijving) {
+    alert('Kies voor Datum, Bedrag en Omschrijving een kolom.');
+    return;
+  }
+
+  // Ruwe preview verbergen, mapping-card inklappen
+  document.getElementById('card-preview').classList.add('hidden');
+  document.getElementById('card-mapping').classList.add('hidden');
+
+  setStatus(`✓ ${parsedRows.length} transacties geladen.`);
+  buildTransactions();
+  saveState();
+  renderTable();
+});
+
+// ─── Categorieën ─────────────────────────────────────────────────────────────
+
+const CATEGORIES = {
+  inkomsten: [
+    'Salaris','Uitkering','Pensioen','Vakantiegeld','Inkomen uit onderneming',
+    'Bijzondere bijstand bewind/mentor/curator','Bijzondere bijstand overig',
+    'Huurinkomsten','Belastingteruggave','Toeslagen - huurtoeslag',
+    'Toeslagen - zorgtoeslag','Toeslagen - kinderopvangtoeslag',
+    'Toeslagen - kindgebonden budget','Tegemoetkoming reiskosten',
+    'Tegemoetkoming ziektekosten/WLZ','Rente','Dividend','Schenkingen',
+    'Nalatenschap','Alimentatie','Kinderbijslag','Studiefinanciering',
+    'Terugstorting derden','Vrijwilligersvergoeding','Overige inkomsten',
+  ],
+  uitgaven: [
+    'Leefgeld / zakgeld','Huur / kostgeld','Hypotheek','Eigen bijdrage zorg met verblijf','Energie (gas en elektra)','Water',
+    'Vaste Telefoon, TV en Internet','Mobiele telefoon','Service kosten (te)huis','Premie Zorgverzekering','Premie Verzekeringen brand/inboedel/aansprakelijkheid',
+    'Premie autoverzekering', 'Premie uitvaartverzekering', 'Premie pakketverzekering/overige','Kleding en schoenen','Persoonlijke verzorging','Rente en aflossing schulden anders dan hypotheek','Bankkosten','Debetrente', 
+    'Inkomstenbelasting', 'Motorrijtuigenbelasting', 'Gemeentelijke heffingen', 'Waterschapsbelastingen', 'Overige belastingen',
+    'Eigen bijdrage WLZ/ziektekosten', 'Kosten auto anders dan verzekeringen en motorrijtuigenbelasting', 'Reiskosten betrokkene', 'Reiskosten derden',
+    'Hobbys/contributies/abonnementen','Vakantie','Boetes','Giften en schenkingen (machtigingen)','Cadeaus',
+    'Uitgave ingevolge machtiging', 'Beloning curator/bewindvoerder', 'Beloning mentor', 'Kinderopvang',
+    'Juridische kosten', 'Medische kosten/medicatie','Alimentatie','Boedelafdracht (Msnp/Wsnp)','Kosten dieren','Ouderbijdragen LBIO',
+    'Overige uitgaven'
+  ],
+  intern: [],
+};
+
+// ─── Stap 2 & 3: Transactietabel ─────────────────────────────────────────────
+
+const PAGE_SIZE = 50;
+let transactions  = [];   // genormaliseerde transacties
+let filtered      = [];   // na zoekfilter
+let currentPage   = 1;
+
+function buildTransactions() {
+  const keyCounts = {};
+  transactions = parsedRows.map((row, idx) => {
+    const bedrag = parseBedrag(row[mapping.bedrag] ?? '');
+    const type   = bedrag > 0 ? 'inkomsten' : bedrag < 0 ? 'uitgaven' : '';
+    const datum        = row[mapping.datum]        ?? '';
+    const bedragRaw    = row[mapping.bedrag]       ?? '';
+    const omschrijving = row[mapping.omschrijving] ?? '';
+
+    // Stabiele sleutel op inhoud; teller voor exacte duplicaten
+    const base = `${datum}|${bedragRaw}|${omschrijving}`;
+    keyCounts[base] = (keyCounts[base] || 0) + 1;
+    const storageKey = keyCounts[base] > 1 ? `${base}|${keyCounts[base]}` : base;
+
+    return {
+      idx,
+      datum,
+      bedragRaw,
+      omschrijving,
+      eigenRekening: mapping.eigenRekening ? (row[mapping.eigenRekening] ?? '') : '',
+      saldo:         mapping.saldo         ? parseBedrag(row[mapping.saldo] ?? '') : null,
+      tegenrekening: mapping.tegenrekening ? (row[mapping.tegenrekening]  ?? '') : '',
+      bedrag,
+      type,
+      categorie: '',
+      storageKey,
+    };
+  });
+
+  loadFromStorage(); // herstel eerder opgeslagen labels
+  filtered = transactions.slice();
+}
+
+function parseBedrag(str) {
+  // Ondersteunt "1.234,56", "1234.56", "-500,00", "500,00 Bij/Af" etc.
+  let s = str.replace(/[^\d,.\-+]/g, '');  // strip alles behalve cijfers en tekens
+  // Europese notatie: punt als duizendtal, komma als decimaal
+  if (/\d+\.\d{3}(,\d+)?$/.test(s)) s = s.replace(/\./g, '').replace(',', '.');
+  else s = s.replace(',', '.');
+  const n = parseFloat(s);
+  return isNaN(n) ? 0 : n;
+}
+
+function formatDatum(str) {
+  if (!str) return '';
+  // YYYY-MM-DD → DD-MM-YYYY
+  const m = str.match(/^(\d{4})[.\-\/](\d{2})[.\-\/](\d{2})$/);
+  if (m) return `${m[3]}-${m[2]}-${m[1]}`;
+  // YYYYMMDD → DD-MM-YYYY
+  const m2 = str.match(/^(\d{4})(\d{2})(\d{2})$/);
+  if (m2) return `${m2[3]}-${m2[2]}-${m2[1]}`;
+  return str;
+}
+
+function formatEuro(amount) {
+  return new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' }).format(amount);
+}
+
+function typeOptions(selected) {
+  const types = [
+    { v: '',         label: '— kies —' },
+    { v: 'inkomsten', label: 'Inkomsten' },
+    { v: 'uitgaven',  label: 'Uitgaven' },
+    { v: 'intern',    label: 'Intern' },
+  ];
+  return types.map(t =>
+    `<option value="${t.v}" ${selected === t.v ? 'selected' : ''}>${t.label}</option>`
+  ).join('');
+}
+
+function catOptions(type, selected) {
+  if (type === 'intern') {
+    // Unieke eigen rekeningen als keuze
+    const rekeningen = [...new Set(
+      transactions.map(tx => tx.eigenRekening).filter(r => r)
+    )].sort();
+    if (rekeningen.length === 0) return '<option value="">— geen rekeningen bekend —</option>';
+    const opts = rekeningen.map(r =>
+      `<option value="${esc(r)}" ${selected === r ? 'selected' : ''}>${esc(r)}</option>`
+    ).join('');
+    return `<option value="">— kies rekening —</option>${opts}`;
+  }
+  const cats = CATEGORIES[type] || [];
+  if (cats.length === 0) return '<option value="">—</option>';
+  const opts = cats.map(c =>
+    `<option value="${esc(c)}" ${selected === c ? 'selected' : ''}>${esc(c)}</option>`
+  ).join('');
+  return `<option value="">— kies —</option>${opts}`;
+}
+
+function txRow(tx, hasTegen) {
+  const cls         = tx.bedrag >= 0 ? 'amount-pos' : 'amount-neg';
+  const catDisabled = !tx.type ? 'disabled' : '';
+  const tegenCol    = hasTegen
+    ? `<td title="${esc(tx.tegenrekening)}" style="max-width:140px;overflow:hidden;text-overflow:ellipsis;font-size:0.8rem;color:#666">${esc(tx.tegenrekening)}</td>`
+    : '';
+  return `<tr data-idx="${tx.idx}">
+    <td style="color:#aaa;font-size:0.8rem;white-space:nowrap">
+      ${tx.idx + 1}
+      <button class="btn-info" onclick="openModal(${tx.idx})" title="Alle details bekijken">i</button>
+    </td>
+    <td>${esc(formatDatum(tx.datum))}</td>
+    <td class="${cls}">${esc(formatEuro(tx.bedrag))}</td>
+    <td title="${esc(tx.omschrijving)}">${esc(tx.omschrijving)}</td>
+    ${tegenCol}
+    <td class="col-type">
+      <select class="sel-type" data-idx="${tx.idx}" data-v="${tx.type}">
+        ${typeOptions(tx.type)}
+      </select>
+    </td>
+    <td class="col-cat">
+      <select class="sel-cat" data-idx="${tx.idx}" ${catDisabled}>
+        ${catOptions(tx.type, tx.categorie)}
+      </select>
+    </td>
+  </tr>`;
+}
+
+function renderTable() {
+  const hasTegen  = !!mapping.tegenrekening;
+  const hasEigen  = !!mapping.eigenRekening;
+  const colSpan   = 5 + (hasTegen ? 1 : 0); // voor accountkop colspan
+  document.getElementById('th-tegenrekening').classList.toggle('hidden', !hasTegen);
+
+  const tbody = document.getElementById('tx-tbody');
+
+  if (hasEigen) {
+    // Groepeer op eigen rekening, toon alle gefilterde rijen (geen paginering)
+    const groups = {};
+    const order  = [];
+    filtered.forEach(tx => {
+      const key = tx.eigenRekening || '(onbekend)';
+      if (!groups[key]) { groups[key] = []; order.push(key); }
+      groups[key].push(tx);
+    });
+
+    tbody.innerHTML = order.map(rek => {
+      const list  = groups[rek];
+      const total = list.reduce((s, t) => s + t.bedrag, 0);
+      const totCls = total >= 0 ? 'amount-pos' : 'amount-neg';
+      const header = `<tr class="account-header-row">
+        <td colspan="${colSpan - 1}" style="font-family:monospace">
+          Rekening&nbsp;&nbsp;<strong>${esc(rek)}</strong>
+          <span style="font-family:system-ui;font-size:0.75rem;font-weight:400;color:#ccc;margin-left:0.5rem">${list.length} transacties</span>
+        </td>
+        <td style="text-align:right" class="${totCls}">${formatEuro(total)}</td>
+      </tr>`;
+      return header + list.map(tx => txRow(tx, hasTegen)).join('');
+    }).join('');
+
+    document.getElementById('pagination').innerHTML = '';
+  } else {
+    // Geen eigen rekening → paginering zoals voorheen
+    const start = (currentPage - 1) * PAGE_SIZE;
+    const slice = filtered.slice(start, start + PAGE_SIZE);
+    tbody.innerHTML = slice.map(tx => txRow(tx, hasTegen)).join('');
+    renderPagination();
+  }
+
+  document.getElementById('tx-count').textContent =
+    `${filtered.length} van ${transactions.length} transacties`;
+  document.getElementById('card-transactions').classList.remove('hidden');
+}
+
+// ─── Dropdown event-handling (delegatie op tbody) ─────────────────────────────
+
+document.getElementById('tx-tbody').addEventListener('change', e => {
+  const el  = e.target;
+  const idx = parseInt(el.dataset.idx, 10);
+  const tx  = transactions[idx];
+  if (!tx) return;
+
+  if (el.classList.contains('sel-type')) {
+    tx.type      = el.value;
+    tx.categorie = '';
+    el.dataset.v = el.value;
+
+    const row    = el.closest('tr');
+    const catSel = row.querySelector('.sel-cat');
+    catSel.innerHTML = catOptions(tx.type, '');
+    catSel.disabled  = !tx.type;
+  }
+
+  if (el.classList.contains('sel-cat')) {
+    tx.categorie = el.value;
+  }
+
+  saveToStorage();
+
+  // Bulk-bar tonen als tegenrekening bekend en niet leeg is
+  if (mapping.tegenrekening && tx.tegenrekening) {
+    showBulkBar(tx);
+  }
+});
+
+// ─── Bulk-apply tegenrekening ─────────────────────────────────────────────────
+
+let bulkSourceIdx = null; // idx van de tx die de bulk triggerde
+
+function sameAccount(a, b) {
+  // Scope bulk altijd binnen dezelfde eigen rekening (als die bekend is)
+  if (mapping.eigenRekening) return a.eigenRekening === b.eigenRekening;
+  return true;
+}
+
+function showBulkBar(tx) {
+  bulkSourceIdx = tx.idx;
+  const siblings  = transactions.filter(t =>
+    t.idx !== tx.idx &&
+    t.tegenrekening === tx.tegenrekening &&
+    sameAccount(t, tx)
+  );
+  const unlabeled = siblings.filter(t => !t.type);
+
+  if (siblings.length === 0) { hideBulkBar(); return; }
+
+  const scopeLabel = mapping.eigenRekening
+    ? ` op rekening <span class="bulk-rek">${esc(tx.eigenRekening)}</span>` : '';
+
+  const bar = document.getElementById('bulk-bar');
+  bar.innerHTML = `
+    <span>&#128273;</span>
+    <span><strong>${siblings.length}</strong> andere transacties met tegenrekening
+      <span class="bulk-rek">${esc(tx.tegenrekening)}</span>${scopeLabel}
+    </span>
+    ${unlabeled.length > 0
+      ? `<button class="btn-bulk btn-bulk-unlabeled" onclick="applyBulk(${tx.idx}, false)">
+           Toepassen op ${unlabeled.length} ongelabeld
+         </button>`
+      : ''}
+    <button class="btn-bulk btn-bulk-all" onclick="applyBulk(${tx.idx}, true)">
+      Toepassen op alle ${siblings.length}
+    </button>
+    <button class="btn-bulk btn-bulk-close" onclick="hideBulkBar()" title="Sluiten">&times;</button>
+  `;
+  bar.classList.remove('hidden');
+}
+
+function hideBulkBar() {
+  document.getElementById('bulk-bar').classList.add('hidden');
+  bulkSourceIdx = null;
+}
+
+function applyBulk(sourceIdx, overwriteAll) {
+  const source = transactions[sourceIdx];
+  if (!source) return;
+
+  transactions.forEach(tx => {
+    if (tx.idx === sourceIdx) return;
+    if (tx.tegenrekening !== source.tegenrekening) return;
+    if (!sameAccount(tx, source)) return;
+    if (!overwriteAll && tx.type) return;
+
+    tx.type      = source.type;
+    tx.categorie = source.categorie;
+  });
+
+  saveToStorage();
+  hideBulkBar();
+  renderTable();
+}
+
+function renderPagination() {
+  const total = Math.ceil(filtered.length / PAGE_SIZE);
+  const pg    = document.getElementById('pagination');
+  if (total <= 1) { pg.innerHTML = ''; return; }
+
+  let html = `<button ${currentPage === 1 ? 'disabled' : ''} onclick="goPage(${currentPage - 1})">&lsaquo; Vorige</button>`;
+
+  // toon max 7 pagina-knoppen
+  const range = pageRange(currentPage, total);
+  for (const p of range) {
+    if (p === '…') {
+      html += `<span style="padding:0 0.25rem;color:#aaa">…</span>`;
+    } else {
+      html += `<button class="${p === currentPage ? 'active' : ''}" onclick="goPage(${p})">${p}</button>`;
+    }
+  }
+
+  html += `<button ${currentPage === total ? 'disabled' : ''} onclick="goPage(${currentPage + 1})">Volgende &rsaquo;</button>`;
+  html += `<span class="page-info">Pagina ${currentPage} van ${total}</span>`;
+  pg.innerHTML = html;
+}
+
+function pageRange(cur, total) {
+  if (total <= 7) return Array.from({length: total}, (_, i) => i + 1);
+  const pages = [1];
+  if (cur > 3) pages.push('…');
+  for (let p = Math.max(2, cur - 1); p <= Math.min(total - 1, cur + 1); p++) pages.push(p);
+  if (cur < total - 2) pages.push('…');
+  pages.push(total);
+  return pages;
+}
+
+function goPage(p) {
+  currentPage = p;
+  renderTable();
+  document.getElementById('card-transactions').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// Zoekbalk + type-filter
+function applyFilters() {
+  const q    = document.getElementById('search-input').value.toLowerCase();
+  const type = document.getElementById('filter-type').value;
+  filtered = transactions.filter(tx => {
+    if (q    && !tx.omschrijving.toLowerCase().includes(q)) return false;
+    if (type === 'ongelabeld') return !tx.type;
+    if (type && tx.type !== type) return false;
+    return true;
+  });
+  currentPage = 1;
+  renderTable();
+}
+document.getElementById('search-input').addEventListener('input', applyFilters);
+document.getElementById('filter-type').addEventListener('change', applyFilters);
+
+// ─── Stap 4: localStorage ────────────────────────────────────────────────────
+
+const LS_KEY       = 'rev_annotations';
+const LS_STATE_KEY = 'rev_state';
+
+// ── Sessie opslaan (CSV-data + mapping) ──────────────────────────────────────
+
+function saveState() {
+  try {
+    localStorage.setItem(LS_STATE_KEY, JSON.stringify({ parsedRows, columnHeaders, mapping }));
+  } catch (e) {
+    // Bestand te groot voor localStorage — alleen annotations bewaren
+    console.warn('Sessie-opslag mislukt (bestand te groot?):', e);
+  }
+}
+
+// ── Sessie herstellen bij paginaladen ────────────────────────────────────────
+
+function tryRestoreSession() {
+  let state;
+  try {
+    const raw = localStorage.getItem(LS_STATE_KEY);
+    if (!raw) return;
+    state = JSON.parse(raw);
+  } catch { return; }
+
+  if (!state.parsedRows?.length || !state.columnHeaders?.length || !state.mapping) return;
+
+  parsedRows     = state.parsedRows;
+  columnHeaders  = state.columnHeaders;
+  mapping        = state.mapping;
+
+  buildTransactions();
+  renderTable();
+
+  // Herstel-banner tonen
+  const banner = document.getElementById('restore-banner');
+  const info   = document.getElementById('restore-info');
+  info.textContent = `${parsedRows.length} transacties hersteld vanuit vorige sessie.`;
+  banner.classList.remove('hidden');
+
+  setStatus(`✓ Sessie hersteld — ${parsedRows.length} transacties.`);
+}
+
+function saveToStorage() {
+  const data = {};
+  transactions.forEach(tx => {
+    if (tx.type || tx.categorie) {
+      data[tx.storageKey] = { type: tx.type, categorie: tx.categorie };
+    }
+  });
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify(data));
+    flashSaved();
+  } catch (e) {
+    console.warn('localStorage vol of niet beschikbaar:', e);
+  }
+}
+
+function loadFromStorage() {
+  let data;
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return;
+    data = JSON.parse(raw);
+  } catch { return; }
+
+  let restored = 0;
+  transactions.forEach(tx => {
+    const saved = data[tx.storageKey];
+    if (!saved) return;
+    // Alleen herstellen als opgeslagen type geldig is; bedrag-gebaseerde default mag worden overschreven
+    if (saved.type) { tx.type      = saved.type;      restored++; }
+    if (saved.categorie) tx.categorie = saved.categorie;
+  });
+
+  if (restored > 0) {
+    setStatus(`✓ ${transactions.length} transacties geladen — ${restored} eerder opgeslagen labels hersteld.`);
+  }
+}
+
+let saveFlashTimer = null;
+function flashSaved() {
+  const el = document.getElementById('save-indicator');
+  el.textContent = '✓ Opgeslagen';
+  el.style.opacity = '1';
+  clearTimeout(saveFlashTimer);
+  saveFlashTimer = setTimeout(() => { el.style.opacity = '0'; }, 1800);
+}
+
+document.getElementById('btn-clear-storage').addEventListener('click', () => {
+  if (!confirm('Alle opgeslagen data verwijderen (CSV + labels)? De pagina wordt hierna leeggemaakt.')) return;
+  localStorage.removeItem(LS_KEY);
+  localStorage.removeItem(LS_STATE_KEY);
+  location.reload();
+});
+
+// ─── Stap 5: Overzicht ───────────────────────────────────────────────────────
+
+document.getElementById('btn-show-summary').addEventListener('click', () => {
+  renderSummary();
+  document.getElementById('card-summary').scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+
+function summaryForGroup(txList) {
+  const labeled   = txList.filter(tx => tx.type);
+  const unlabeled = txList.filter(tx => !tx.type || (tx.type !== 'intern' && !tx.categorie));
+
+  const totInkomsten = labeled.filter(t => t.type === 'inkomsten' && t.categorie).reduce((s, t) => s + t.bedrag, 0);
+  const totUitgaven  = labeled.filter(t => t.type === 'uitgaven'  && t.categorie).reduce((s, t) => s + t.bedrag, 0);
+  const saldo        = totInkomsten + totUitgaven;
+  const internTotal  = labeled.filter(t => t.type === 'intern').reduce((s, t) => s + t.bedrag, 0);
+  const internCount  = labeled.filter(t => t.type === 'intern').length;
+
+  const catMap = {};
+  labeled.forEach(tx => {
+    if (tx.type === 'intern') return;
+    const key = `${tx.type}||${tx.categorie || '(geen categorie)'}`;
+    if (!catMap[key]) catMap[key] = { type: tx.type, cat: tx.categorie || '(geen categorie)', total: 0, count: 0 };
+    catMap[key].total += tx.bedrag;
+    catMap[key].count++;
+  });
+
+  const cats    = Object.values(catMap);
+  const inCats  = cats.filter(c => c.type === 'inkomsten').sort((a, b) => b.total - a.total);
+  const uitCats = cats.filter(c => c.type === 'uitgaven').sort((a, b) => a.total - b.total);
+  const maxIn   = Math.max(...inCats.map(c => c.total), 1);
+  const maxUit  = Math.max(...uitCats.map(c => Math.abs(c.total)), 1);
+
+  let html = '';
+
+  if (unlabeled.length > 0) {
+    html += `<div class="warn-unlabeled">
+      &#9888; <strong>${unlabeled.length} transacties</strong> zonder type — niet meegeteld.
+    </div>`;
+  }
+
+  const saldoCls = saldo >= 0 ? 'box-saldo-pos' : 'box-saldo-neg';
+  html += `<div class="summary-totals">
+    <div class="summary-box box-inkomsten"><div class="label">Inkomsten</div><div class="amount">${formatEuro(totInkomsten)}</div></div>
+    <div class="summary-box box-uitgaven"><div class="label">Uitgaven</div><div class="amount">${formatEuro(Math.abs(totUitgaven))}</div></div>
+    <div class="summary-box ${saldoCls}"><div class="label">Saldo</div><div class="amount">${formatEuro(saldo)}</div></div>
+    ${internCount > 0 ? `<div class="summary-box" style="background:#e3f2fd;color:#0d47a1">
+      <div class="label">Intern (${internCount}×)</div><div class="amount" style="font-size:1rem">${formatEuro(internTotal)}</div>
+    </div>` : ''}
+  </div>`;
+
+  if (inCats.length > 0) {
+    html += `<div class="summary-section"><h3>Inkomsten per categorie</h3>`;
+    inCats.forEach(c => {
+      const pct = Math.round((c.total / maxIn) * 100);
+      html += `<div class="cat-row">
+        <span class="cat-name">${esc(c.cat)}</span>
+        <span class="cat-count">${c.count}×</span>
+        <div class="cat-bar-wrap"><div class="cat-bar bar-inkomsten" style="width:${pct}%"></div></div>
+        <span class="cat-amount amount-pos">${formatEuro(c.total)}</span>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  if (uitCats.length > 0) {
+    html += `<div class="summary-section"><h3>Uitgaven per categorie</h3>`;
+    uitCats.forEach(c => {
+      const pct = Math.round((Math.abs(c.total) / maxUit) * 100);
+      html += `<div class="cat-row">
+        <span class="cat-name">${esc(c.cat)}</span>
+        <span class="cat-count">${c.count}×</span>
+        <div class="cat-bar-wrap"><div class="cat-bar bar-uitgaven" style="width:${pct}%"></div></div>
+        <span class="cat-amount amount-neg">${formatEuro(Math.abs(c.total))}</span>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  if (labeled.length === 0) {
+    html += `<p style="color:#aaa;font-size:0.9rem">Nog geen transacties gelabeld.</p>`;
+  }
+
+  return html;
+}
+
+function calcTopSummary(txList) {
+  const totInkomsten = txList.filter(t => t.type === 'inkomsten' && t.categorie).reduce((s, t) => s + t.bedrag, 0);
+  const totUitgaven  = txList.filter(t => t.type === 'uitgaven'  && t.categorie).reduce((s, t) => s + t.bedrag, 0);
+  const verschil     = totInkomsten + totUitgaven;
+
+  let beginsaldo = null, eindsaldo = null;
+  const rekeningRows = [];   // [{ rek, beginsaldo, eindsaldo }]
+
+  if (mapping.saldo) {
+    const accounts = [...new Set(txList.map(tx => tx.eigenRekening || '(onbekend)'))].sort();
+    beginsaldo = 0; eindsaldo = 0;
+    accounts.forEach(rek => {
+      const group = txList
+        .filter(tx => (tx.eigenRekening || '(onbekend)') === rek && tx.saldo !== null)
+        .sort((a, b) => a.datum.localeCompare(b.datum));
+      if (group.length === 0) return;
+      const bs = group[0].saldo - group[0].bedrag;
+      const es = group[group.length - 1].saldo;
+      beginsaldo += bs;
+      eindsaldo  += es;
+      rekeningRows.push({ rek, beginsaldo: bs, eindsaldo: es });
+    });
+  }
+
+  return { totInkomsten, totUitgaven, verschil, beginsaldo, eindsaldo, rekeningRows };
+}
+
+function renderTopSummary(stats) {
+  const vCls  = stats.verschil  >= 0 ? 'amount-pos' : 'amount-neg';
+  const sdCls = (stats.eindsaldo !== null && stats.beginsaldo !== null)
+    ? ((stats.eindsaldo - stats.beginsaldo) >= 0 ? 'amount-pos' : 'amount-neg')
+    : '';
+
+  const hasSaldo = stats.beginsaldo !== null;
+  const salVerschil = hasSaldo ? stats.eindsaldo - stats.beginsaldo : null;
+
+  return `<div style="display:grid;grid-template-columns:1fr${hasSaldo ? ' 1fr' : ''};gap:1.25rem;margin-bottom:1.5rem">
+    <div style="background:#f8f9fb;border:1px solid #e0e4ed;border-radius:8px;padding:1rem 1.25rem">
+      <div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.05em;color:#888;margin-bottom:0.75rem">Inkomsten &amp; uitgaven</div>
+      <div style="display:flex;flex-direction:column;gap:0.4rem;font-size:0.9rem">
+        <div style="display:flex;justify-content:space-between">
+          <span>Totaal netto-inkomen</span>
+          <strong class="amount-pos">${formatEuro(stats.totInkomsten)}</strong>
+        </div>
+        <div style="display:flex;justify-content:space-between">
+          <span>Totaal uitgaven</span>
+          <strong class="amount-neg">${formatEuro(Math.abs(stats.totUitgaven))}</strong>
+        </div>
+        <div style="display:flex;justify-content:space-between;border-top:1px solid #ddd;padding-top:0.4rem;margin-top:0.2rem">
+          <span><strong>Verschil inkomen − uitgaven</strong></span>
+          <strong class="${vCls}">${formatEuro(stats.verschil)}</strong>
+        </div>
+      </div>
+    </div>
+    ${hasSaldo ? `
+    <div style="background:#f8f9fb;border:1px solid #e0e4ed;border-radius:8px;padding:1rem 1.25rem">
+      <div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.05em;color:#888;margin-bottom:0.75rem">Saldo rekeningen</div>
+      <div style="display:flex;flex-direction:column;gap:0.4rem;font-size:0.9rem">
+        <div style="display:flex;justify-content:space-between">
+          <span>Totaal saldo begindatum</span>
+          <strong>${formatEuro(stats.beginsaldo)}</strong>
+        </div>
+        <div style="display:flex;justify-content:space-between">
+          <span>Totaal saldo einddatum</span>
+          <strong>${formatEuro(stats.eindsaldo)}</strong>
+        </div>
+        <div style="display:flex;justify-content:space-between;border-top:1px solid #ddd;padding-top:0.4rem;margin-top:0.2rem">
+          <span><strong>Verschil einddatum − begindatum</strong></span>
+          <strong class="${sdCls}">${formatEuro(salVerschil)}</strong>
+        </div>
+      </div>
+    </div>
+    <div style="grid-column:1/-1;background:#f0f2f7;border:1px solid #d0d4e0;border-radius:8px;padding:0.75rem 1.25rem;display:flex;justify-content:space-between;align-items:center;font-size:0.9rem">
+      <span style="color:#555">Afwijking &nbsp;<small style="color:#aaa">(verschil rekeningen − verschil inkomen/uitgaven)</small></span>
+      <strong class="${Math.abs(salVerschil - stats.verschil) < 0.01 ? '' : 'amount-neg'}" style="${Math.abs(salVerschil - stats.verschil) < 0.01 ? 'color:#2e7d32' : ''}">${formatEuro(salVerschil - stats.verschil)}</strong>
+    </div>
+    ${stats.rekeningRows.length > 0 ? `
+    <div style="grid-column:1/-1;margin-top:0.25rem">
+      <table style="width:100%;border-collapse:collapse;font-size:0.85rem">
+        <thead>
+          <tr style="background:#1a1a2e;color:white">
+            <th style="padding:0.5rem 0.75rem;text-align:left;font-family:monospace;font-weight:600">Rekening</th>
+            <th style="padding:0.5rem 0.75rem;text-align:right">Beginsaldo</th>
+            <th style="padding:0.5rem 0.75rem;text-align:right">Eindsaldo</th>
+            <th style="padding:0.5rem 0.75rem;text-align:right">Verschil</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${stats.rekeningRows.map((r, i) => {
+            const v = r.eindsaldo - r.beginsaldo;
+            const vCls = v >= 0 ? 'amount-pos' : 'amount-neg';
+            return `<tr style="background:${i % 2 === 0 ? 'white' : '#f9fafc'}">
+              <td style="padding:0.45rem 0.75rem;font-family:monospace;font-size:0.8rem">${esc(r.rek)}</td>
+              <td style="padding:0.45rem 0.75rem;text-align:right">${formatEuro(r.beginsaldo)}</td>
+              <td style="padding:0.45rem 0.75rem;text-align:right">${formatEuro(r.eindsaldo)}</td>
+              <td style="padding:0.45rem 0.75rem;text-align:right;font-weight:600" class="${vCls}">${formatEuro(v)}</td>
+            </tr>`;
+          }).join('')}
+          <tr style="background:#f0f2f7;font-weight:700;border-top:2px solid #d0d4e0">
+            <td style="padding:0.45rem 0.75rem">Totaal</td>
+            <td style="padding:0.45rem 0.75rem;text-align:right">${formatEuro(stats.beginsaldo)}</td>
+            <td style="padding:0.45rem 0.75rem;text-align:right">${formatEuro(stats.eindsaldo)}</td>
+            <td style="padding:0.45rem 0.75rem;text-align:right;font-weight:700" class="${(stats.eindsaldo - stats.beginsaldo) >= 0 ? 'amount-pos' : 'amount-neg'}">${formatEuro(stats.eindsaldo - stats.beginsaldo)}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>` : ''}` : ''}
+  </div>`;
+}
+
+function renderSummary() {
+  document.getElementById('card-summary').classList.remove('hidden');
+
+  const hasEigen = !!mapping.eigenRekening;
+
+  if (!hasEigen) {
+    document.getElementById('summary-account-toggles').innerHTML = '';
+    document.getElementById('summary-content').innerHTML =
+      renderTopSummary(calcTopSummary(transactions)) + summaryForGroup(transactions);
+    return;
+  }
+
+  // Verzamel unieke eigen rekeningen
+  const allAccounts = [...new Set(transactions.map(tx => tx.eigenRekening || '(onbekend)'))].sort();
+
+  // Toggle-bar renderen
+  const toggleHtml = `
+    <div style="margin-bottom:1rem;font-size:0.85rem;color:#555">
+      <strong style="display:block;margin-bottom:0.5rem">Rekeningen in overzicht:</strong>
+      <div style="display:flex;flex-wrap:wrap;gap:0.5rem">
+        ${allAccounts.map(rek => `
+          <label style="display:flex;align-items:center;gap:0.3rem;cursor:pointer;
+                        background:${hiddenAccounts.has(rek) ? '#f0f0f0' : '#e8f5e9'};
+                        border:1px solid ${hiddenAccounts.has(rek) ? '#ccc' : '#a5d6a7'};
+                        border-radius:4px;padding:0.25rem 0.6rem;font-family:monospace;font-size:0.8rem">
+            <input type="checkbox" onchange="toggleAccount('${esc(rek)}')"
+              ${hiddenAccounts.has(rek) ? '' : 'checked'} style="cursor:pointer" />
+            ${esc(rek)}
+          </label>`).join('')}
+      </div>
+    </div>`;
+  document.getElementById('summary-account-toggles').innerHTML = toggleHtml;
+
+  // Top-samenvatting over alle zichtbare rekeningen samen
+  const visibleTx = transactions.filter(tx =>
+    !hiddenAccounts.has(tx.eigenRekening || '(onbekend)')
+  );
+  let html = renderTopSummary(calcTopSummary(visibleTx));
+
+  // Per rekening + totaalkolom naast elkaar
+  const visibleAccounts = allAccounts.filter(r => !hiddenAccounts.has(r));
+
+  function accountCol(rek, txList, isTotal) {
+    const borderColor = isTotal ? '#e65100' : '#4a7cdc';
+    const bg          = isTotal ? '#fff8f0' : '#f4f6f9';
+    const label       = isTotal ? 'Totaal alle rekeningen' : `Rekening ${esc(rek)}`;
+    return `<div style="min-width:260px">
+      <h3 style="font-family:${isTotal ? 'system-ui' : 'monospace'};font-size:${isTotal ? '0.9rem' : '1rem'};
+                 font-weight:700;color:#1a1a2e;margin-bottom:1rem;
+                 padding:0.5rem 0.75rem;background:${bg};
+                 border-left:4px solid ${borderColor};border-radius:0 4px 4px 0">
+        ${label}
+      </h3>
+      ${summaryForGroup(txList)}
+    </div>`;
+  }
+
+  let cols = '';
+  visibleAccounts.forEach(rek => {
+    const txList = transactions.filter(tx => (tx.eigenRekening || '(onbekend)') === rek);
+    cols += accountCol(rek, txList, false);
+  });
+
+  // Totaalkolom alleen tonen als er meer dan één rekening zichtbaar is
+  if (visibleAccounts.length > 1) {
+    const totalTx = transactions.filter(tx => !hiddenAccounts.has(tx.eigenRekening || '(onbekend)'));
+    cols += accountCol('', totalTx, true);
+  }
+
+  if (!cols) {
+    html += `<p style="color:#aaa;font-size:0.9rem">Alle rekeningen zijn uitgeschakeld.</p>`;
+  } else {
+    html += `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.5rem;align-items:start">${cols}</div>`;
+  }
+
+  document.getElementById('summary-content').innerHTML = html;
+}
+
+function toggleAccount(rek) {
+  if (hiddenAccounts.has(rek)) hiddenAccounts.delete(rek);
+  else hiddenAccounts.add(rek);
+  renderSummary();
+}
+
+// ─── Info modal ──────────────────────────────────────────────────────────────
+
+function openModal(idx) {
+  const tx  = transactions[idx];
+  const row = parsedRows[idx];
+  if (!tx || !row) return;
+
+  document.getElementById('modal-title').textContent =
+    `Transactie #${idx + 1} — ${formatDatum(tx.datum)}`;
+
+  const rows = columnHeaders.map(h => {
+    const val = row[h] ?? '';
+    return `<tr><td>${esc(h)}</td><td>${esc(val) || '<span style="color:#bbb">—</span>'}</td></tr>`;
+  }).join('');
+
+  document.getElementById('modal-table').innerHTML = rows;
+  document.getElementById('info-modal').classList.remove('hidden');
+}
+
+function closeModal() {
+  document.getElementById('info-modal').classList.add('hidden');
+}
+
+// Klik buiten modal-box sluit hem
+document.getElementById('info-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('info-modal')) closeModal();
+});
+
+// Escape-toets sluit modal
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+});
+
+// ─── Sessie resetten ─────────────────────────────────────────────────────────
+
+function newSession() {
+  // Verberg tabel en overzicht, toon upload opnieuw
+  document.getElementById('card-transactions').classList.add('hidden');
+  document.getElementById('card-summary').classList.add('hidden');
+  document.getElementById('restore-banner').classList.add('hidden');
+  document.getElementById('card-upload').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  // Verwijder alleen de state (CSV), labels blijven bewaard voor als het bestand opnieuw wordt geladen
+  localStorage.removeItem(LS_STATE_KEY);
+  parsedRows    = [];
+  columnHeaders = [];
+  transactions  = [];
+  filtered      = [];
+}
+
+// ─── Pagina-load: probeer sessie te herstellen ────────────────────────────────
+window.addEventListener('DOMContentLoaded', tryRestoreSession);
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+function setStatus(msg, isError = false) {
+  const el = document.getElementById('status');
+  el.textContent = msg;
+  el.className = isError ? 'error' : '';
+}
+
+function esc(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+</script>
+</body>
+</html>
