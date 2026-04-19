@@ -3,11 +3,39 @@
 
 **Live:** https://macsnoeren.github.io/rekening_en_verantwoording/
 
-Een browser-gebaseerde webapplicatie voor het verwerken en categoriseren van banktransacties, bedoeld om rekening en verantwoording eenvoudiger te maken.
+Een browser-gebaseerde webapplicatie voor het verwerken en categoriseren van banktransacties, bedoeld om de jaarlijkse rekening en verantwoording voor bewindvoerders, curatoren en voogden eenvoudiger te maken.
 
-## Wat doet het?
+## Achtergrond — wat is rekening en verantwoording?
 
-Upload één of meerdere CSV-exports van uw bank en categoriseer elke transactie met een type (inkomsten, uitgaven, intern) en een categorie. De applicatie berekent automatisch samenvattingen per rekening, toont interne overboekingen overzichtelijk en geeft een totaaloverzicht van alle inkomsten en uitgaven over de geselecteerde periode.
+Als u door de rechtbank bent benoemd als **bewindvoerder**, **curator** of **voogd**, bent u wettelijk verplicht om jaarlijks rekening en verantwoording af te leggen bij de kantonrechter (art. 1:445–1:446 BW). Dit is een overzicht — met onderliggende stukken — van alle inkomsten, uitgaven, bezittingen, vorderingen en schulden van de betrokkene over het afgelopen kalenderjaar.
+
+### Wanneer en voor wie?
+
+| Situatie | Wie legt verantwoording af |
+|---|---|
+| Beschermingsbewind | Bewindvoerder |
+| Curatele | Curator |
+| Voogdij (minderjarige) | Voogd |
+
+De rekening en verantwoording wordt jaarlijks ingediend **na 31 december** van het betreffende jaar. Bij het einde van het bewind of de curatele wordt een **eindrekening en verantwoording** ingediend.
+
+### Wat moet erin staan?
+
+- Begin- en eindsaldo van alle bankrekeningen
+- Overzicht van alle inkomsten (salaris, uitkeringen, toeslagen, etc.)
+- Overzicht van alle uitgaven, per categorie
+- Interne overboekingen tussen eigen rekeningen
+- Eventueel beloning/vergoeding van de bewindvoerder
+
+### Indienen bij de rechtbank
+
+De rekening en verantwoording kan digitaal worden ingediend via [Mijn CBM](https://www.rechtspraak.nl/voor-advocaten-en-juristen/reglementen-procedures-en-formulieren/civiel/curatele-bewind-en-mentorschap/digitaal-toezicht) of per post/balie bij de rechtbank. De rechtbank beoordeelt de ingediende stukken en stuurt een reactie. Meer informatie: [rechtspraak.nl — Rekening en verantwoording](https://www.rechtspraak.nl/onderwerpen/rekening-en-verantwoording).
+
+---
+
+## Wat doet deze applicatie?
+
+Upload één of meerdere CSV-exports van uw bank en categoriseer elke transactie met een type (inkomsten, uitgaven, intern) en een categorie. De applicatie berekent automatisch begin- en eindsaldo per rekening, toont interne overboekingen overzichtelijk en geeft een totaaloverzicht dat als basis kan dienen voor de rekening en verantwoording bij de rechtbank.
 
 ## Functionaliteiten
 
@@ -29,11 +57,12 @@ Upload één of meerdere CSV-exports van uw bank en categoriseer elke transactie
 
 ## Gebruik
 
-1. Open `index.html` in een moderne browser (Chrome, Firefox, Edge, Safari)
+1. Open `index.html` in een moderne browser (Chrome, Firefox, Edge, Safari) of gebruik de pagina van github https://macsnoeren.github.io/rekening_en_verantwoording/
 2. Sleep een CSV-bestand naar het uploadgebied of klik om een bestand te kiezen
 3. Wijs de juiste kolommen toe in de kolomkoppeling
 4. Categoriseer de transacties in de tabel
-5. Klik op **Overzicht** voor het totaaloverzicht
+5. Selecteer de rekeningen die in controle zijn van de bewindvoerder. De niet geselecteerde rekeningen worden dan gezien als leefrekening en niet meegenomen in de overzichten van inkomsten en uitgaven.
+6. Klik op **Overzicht** voor het totaaloverzicht
 
 ## Techniek
 
