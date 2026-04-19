@@ -1,4 +1,5 @@
-[![pages-build-deployment](https://github.com/macsnoeren/rekening_en_verantwoording/actions/workflows/pages/pages-build-deployment/badge.svg?branch=main)](https://github.com/macsnoeren/rekening_en_verantwoording/actions/workflows/pages/pages-build-deployment)
+[![pages-build-deployment](https://github.com/macsnoeren/rekening_en_verantwoording/actions/workflows/pages/pages-build-deployment/badge.svg?branch=main)](https://github.com/macsnoeren/rekening_en_verantwoording/actions/workflows/pages/pages-build-deployment) ![GitHub Release](https://img.shields.io/github/v/release/macsnoeren/rekening_en_verantwoording)
+
 # Rekening en Verantwoording
 
 **Live:** https://macsnoeren.github.io/rekening_en_verantwoording/
